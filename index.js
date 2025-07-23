@@ -40,7 +40,8 @@ app.get("/users", (req, res, next) => {
 
 //-----------Sign Up------------------
 app.post("/users/signup", (req, res, next) => {
-    const { user_fName, user_lName, user_email, user_password, DOB, gender } = req.body;
+    const { user_fName, user_lName, user_email, user_password, DOB, gender } =
+        req.body;
     //------------- check if the email exists first ------------
 
     const findQuery = `SELECT user_email FROM Users WHERE user_email=?`;
@@ -51,33 +52,29 @@ app.post("/users/signup", (req, res, next) => {
         console.log(result);
         if (result.length != 0) {
             return res.status(409).json({ Message: "User already exists!" });
-        }
-        else {
+        } else {
             const insertQuery = `INSERT INTO Users (user_fName, user_lName, user_email, user_password, DOB, gender) VALUES(?, ?, ?, ?, ?, ?)`;
-            connection.execute(insertQuery, [
-                user_fName,
-                user_lName,
-                user_email,
-                user_password,
-                DOB,
-                gender,
-            ], (err, result) => {
-                if (err) {
-                    if (err?.errno == 1062) {
-                        return res.status(409).json({ Message: "User already exists!" });
+            connection.execute(
+                insertQuery,
+                [user_fName, user_lName, user_email, user_password, DOB, gender],
+                (err, result) => {
+                    if (err) {
+                        if (err?.errno == 1062) {
+                            return res.status(409).json({ Message: "User already exists!" });
+                        }
+                    } else {
+                        return res
+                            .status(200)
+                            .json({ Message: "User Added Successfully!", result });
                     }
-                } else {
-                    return res
-                        .status(200)
-                        .json({ Message: "User Added Successfully!", result });
                 }
-            });
+            );
         }
     });
 });
 
 //-----------Sign In------------------
-app.post('/users/signin', (req, res, next) => {
+app.post("/users/signin", (req, res, next) => {
     const { user_email, user_password } = req.body;
     const findQuery = `SELECT user_email, user_password FROM Users WHERE user_email=? and user_password=?`;
     connection.execute(findQuery, [user_email, user_password], (err, result) => {
@@ -86,14 +83,15 @@ app.post('/users/signin', (req, res, next) => {
         }
         if (result.length == 0) {
             return res.status(400).json({ Message: "Wrong email or password!" });
-        }
-        else {
-            return res.status(200).json({ Message: "Logged in successfully!", User: result[0] });
+        } else {
+            return res
+                .status(200)
+                .json({ Message: "Logged in successfully!", User: result[0] });
         }
     });
 });
 //----------- Get Profile ------------------
-app.get('/users/:id/profile', (req, res, next) => {
+app.get("/users/:id/profile", (req, res, next) => {
     const { id } = req.params;
     const findQuery = `SELECT 
     user_id, 
@@ -109,30 +107,30 @@ app.get('/users/:id/profile', (req, res, next) => {
 
         if (result.length == 0) {
             return res.status(404).json({ Message: "User not found!" });
-        }
-        else {
+        } else {
             return res.status(200).json({ Message: "DONE!", User: result[0] });
         }
     });
 });
 //----------- Search Users ------------------
-app.get('/users/search', (req, res, next) => {
+app.get("/users/search", (req, res, next) => {
     const findQuery = `SELECT * FROM Users WHERE user_fName LIKE ? or user_lName LIKE ?`;
 
     // query where the first name contains the letter in the query, or last name starts with it
-    connection.execute(findQuery, ["%" + req.query.name + "%", req.query.name + "%"], (err, result) => {
-        if (err) {
-            return res
-                .status(400)
-                .json({ Message: "Query Error!", Error: err });
+    connection.execute(
+        findQuery,
+        ["%" + req.query.name + "%", req.query.name + "%"],
+        (err, result) => {
+            if (err) {
+                return res.status(400).json({ Message: "Query Error!", Error: err });
+            } else {
+                return res.status(200).json({ Message: "DONE!", User: result });
+            }
         }
-        else {
-            return res.status(200).json({ Message: "DONE!", User: result });
-        }
-    });
+    );
 });
 //----------- Update User ------------------
-app.patch('/users/update/:id', (req, res, next) => {
+app.patch("/users/update/:id", (req, res, next) => {
     const { gender } = req.body;
     const { id } = req.params;
 
@@ -144,14 +142,15 @@ app.patch('/users/update/:id', (req, res, next) => {
 
         if (result.affectedRows == 0) {
             return res.status(404).json({ Message: "User not found!" });
-        }
-        else {
-            return res.status(200).json({ Message: "User updated successfully!", User: result });
+        } else {
+            return res
+                .status(200)
+                .json({ Message: "User updated successfully!", User: result });
         }
     });
 });
 //----------- Delete User ------------------
-app.delete('/users/delete/:id', (req, res, next) => {
+app.delete("/users/delete/:id", (req, res, next) => {
     const { id } = req.params;
     const deleteQuery = `DELETE FROM Users WHERE user_id=?`;
     connection.execute(deleteQuery, [id], (err, result) => {
@@ -169,7 +168,7 @@ app.delete('/users/delete/:id', (req, res, next) => {
 //===============================================================================
 
 //--------------- Add Blog --------------------
-app.post('/blogs', (req, res, next) => {
+app.post("/blogs", (req, res, next) => {
     const { blog_title, blog_description, user_id } = req.body;
     const insertQuery = `INSERT INTO Blogs (blog_title, blog_description, user_id) VALUES(?, ?, ?)`;
     const findUserQuery = `SELECT user_id FROM Users WHERE user_id=?`;
@@ -177,12 +176,10 @@ app.post('/blogs', (req, res, next) => {
     connection.execute(findUserQuery, [user_id], (err, result) => {
         if (err) {
             return res.status(400).json({ Message: "Query Error!", Error: err });
-        }
-        else {
+        } else {
             if (result.length == 0) {
                 return res.status(404).json({ Message: "User not found!" });
-            }
-            else {
+            } else {
                 connection.execute(
                     insertQuery,
                     [blog_title, blog_description, user_id],
@@ -200,22 +197,21 @@ app.post('/blogs', (req, res, next) => {
                 );
             }
         }
-    })
+    });
 });
 //--------------- Get All Users With Blogs --------------------
-app.get('/users/blogs', (req, res, next) => {
+app.get("/users/blogs", (req, res, next) => {
     const query = `SELECT * FROM Users INNER JOIN Blogs ON Users.user_id = Blogs.user_id`;
     connection.execute(query, (err, result) => {
         if (err) {
             return res.status(400).json({ Message: "Query Error!", Error: err });
-        }
-        else {
+        } else {
             return res.status(200).json({ Message: "DONE!", result });
         }
     });
 });
 //--------------- Update Blog, Make sure only the owner of the blog can update --------------------
-app.patch('/users/:user_id/blogs/:blog_id', (req, res, next) => {
+app.patch("/users/:user_id/blogs/:blog_id", (req, res, next) => {
     const { user_id, blog_id } = req.params;
     const { blog_title, blog_description } = req.body;
     const findBlogQuery = `SELECT * FROM Blogs INNER JOIN users
@@ -224,33 +220,33 @@ app.patch('/users/:user_id/blogs/:blog_id', (req, res, next) => {
     connection.execute(findBlogQuery, [user_id, blog_id], (err, result) => {
         if (err) {
             return res.status(400).json({ Message: "Query Error!", Error: err });
-        }
-        else {
-
-            if (result.length == '0') {
+        } else {
+            if (result.length == "0") {
                 // user not found or blog not found or unauthorized user to edit the blog
                 return res.status(400).json({ Message: "Something went wrong!" });
-            }
-            else {
+            } else {
                 const updateBlogQuery = `UPDATE Blogs SET blog_title = ?, blog_description = ?
                                         WHERE blog_id = ? AND user_id = ?`;
-                connection.execute(updateBlogQuery, [blog_title, blog_description, blog_id, user_id], (err, result) => {
-                    if (err) {
-                        return res.status(400).json({ Message: "Update Failed!" });
+                connection.execute(
+                    updateBlogQuery,
+                    [blog_title, blog_description, blog_id, user_id],
+                    (err, result) => {
+                        if (err) {
+                            return res.status(400).json({ Message: "Update Failed!" });
+                        } else {
+                            return res
+                                .status(200)
+                                .json({ Message: "Blog update sucessfully!", Blog: result });
+                        }
                     }
-                    else {
-                        return res
-                            .status(200)
-                            .json({ Message: "Blog update sucessfully!", Blog: result });
-                    }
-                });
+                );
             }
         }
     });
 });
 
 //--------------- Delete Blog -Make sure only the owner of the blog can delete --------------------
-app.delete('/users/:user_id/blogs/:blog_id', (req, res, next) => {
+app.delete("/users/:user_id/blogs/:blog_id", (req, res, next) => {
     const { user_id, blog_id } = req.params;
     const findBlogQuery = `SELECT * FROM Blogs INNER JOIN Users
                             ON Users.user_id = Blogs.user_id
@@ -258,29 +254,32 @@ app.delete('/users/:user_id/blogs/:blog_id', (req, res, next) => {
     connection.execute(findBlogQuery, [user_id, blog_id], (err, result) => {
         if (err) {
             return res.status(400).json({ Message: "Query Error", Error: err });
-        }
-        else {
+        } else {
             if (result.length == 0) {
-                return res.status(400).json({ Message: "Someting went wrong! user or blog not found" });
-            }
-            else {
+                return res
+                    .status(400)
+                    .json({ Message: "Someting went wrong! user or blog not found" });
+            } else {
                 const deleteBlogQuery = `DELETE FROM Blogs
                                             WHERE user_id = ? AND blog_id = ?`;
-                connection.execute(deleteBlogQuery, [user_id, blog_id], (err, result) => {
-                    if (err) {
-                        return res.status(400).json({ Message: "Failed to delete the blog!" });
+                connection.execute(
+                    deleteBlogQuery,
+                    [user_id, blog_id],
+                    (err, result) => {
+                        if (err) {
+                            return res
+                                .status(400)
+                                .json({ Message: "Failed to delete the blog!" });
+                        } else {
+                            return res
+                                .status(200)
+                                .json({ Message: "Blog deleted sucessfully!", result });
+                        }
                     }
-                    else {
-                        return res
-                            .status(200)
-                            .json({ Message: "Blog deleted sucessfully!", result });
-                    }
-                })
+                );
             }
         }
-    })
-})
-
-
+    });
+});
 
 app.listen(port, () => console.log(`Example app listening on port ${port}!`));
